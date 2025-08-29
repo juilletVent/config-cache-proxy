@@ -1,0 +1,12 @@
+{
+  "name": "config-cache-proxy",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "cargo watch -w src -x run -c"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

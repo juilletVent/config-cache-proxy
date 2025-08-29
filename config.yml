@@ -1,0 +1,19 @@
+# 服务地址
+server_address: 127.0.0.1
+# 服务端口
+server_port: 1145
+
+# Home 文件路径
+home_file_path: ./index.html
+# API 反向代理 Base URL
+proxy_address: http://192.168.2.10:9110
+
+redis:
+  # Redis 地址
+  address: 192.168.2.22
+  # Redis 端口
+  port: 32079
+  # Redis 密码
+  password: your-redis-password
+  # 缓存过期时间
+  cache_expire_time: 3600

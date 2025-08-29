@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Config Cache Proxy</title>
+    <style>
+      body {
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        background-color: #003e57;
+        color: white;
+      }
+
+      .title {
+        font-size: 2rem;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid white;
+      }
+
+      .sub-title {
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 10px;
+        gap: 30px;
+      }
+
+      .group {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .group-value {
+        font-size: 0.8rem;
+        font-weight: bold;
+      }
+
+      .group-desc {
+        font-size: 0.8rem;
+        color: #ffffff8a;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="title">Config cache center</div>
+    <div class="sub-title">
+      <div class="group">
+        <div id="request-count" class="group-value">0 次</div>
+        <div class="group-desc">配置请求</div>
+      </div>
+      <div class="group">
+        <div id="cache-hit-count" class="group-value">0 次</div>
+        <div class="group-desc">缓存命中</div>
+      </div>
+      <div class="group">
+        <div id="cache-hit-rate" class="group-value">0 %</div>
+        <div class="group-desc">缓存命中率</div>
+      </div>
+      <div class="group">
+        <div id="uptime" class="group-value">N/A</div>
+        <div class="group-desc">已运行</div>
+      </div>
+    </div>
+  </body>
+  <script>
+    const getRuntime = async () => {
+      try {
+        const response = await fetch("/get-runtime");
+        const data = await response.json();
+        document.getElementById("request-count").innerText = data.request_count;
+        document.getElementById("cache-hit-count").innerText =
+          data.cache_hit_count;
+        document.getElementById("cache-hit-rate").innerText =
+          ((data.cache_hit_count / data.request_count) * 100).toFixed(2) + "%";
+        document.getElementById("uptime").innerText = formatUptime(
+          Date.now() - data.start_unix_time
+        );
+      } catch (error) {
+        console.error(error);
+      }
+      setTimeout(getRuntime, 2000);
+    };
+
+    function formatUptime(uptime) {
+      // 格式化成友好的单位时间
+      const seconds = uptime / 1000;
+      const minutes = seconds / 60;
+      const hours = minutes / 60;
+      const days = hours / 24;
+      if (days > 1) {
+        return days.toFixed(2) + " Day";
+      } else if (hours > 1) {
+        return hours.toFixed(2) + " Hour";
+      } else if (minutes > 1) {
+        return minutes.toFixed(0) + " Minute";
+      } else {
+        return seconds.toFixed(0) + " Second";
+      }
+    }
+
+    getRuntime();
+  </script>
+</html>

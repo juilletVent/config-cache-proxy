@@ -1,0 +1,23 @@
+[package]
+name = "config-cache-proxy"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+# 错误处理
+anyhow = "1.0"
+# Axum 后端框架
+axum = "0.8.4"
+# Redis驱动
+deadpool-redis = "0.22.0"
+redis = { version = "0.32.5", features = ["tokio-comp"] }
+# HTTP请求
+reqwest = "0.12.23"
+# 异步运行
+tokio = { version = "1.47.1", features = ["full"] }
+# 序列化相关
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yml = "0.0.12"
+# URL编码
+urlencoding = "2.1.3"
