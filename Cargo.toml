@@ -12,7 +12,10 @@ axum = "0.8.4"
 deadpool-redis = "0.22.0"
 redis = { version = "0.32.5", features = ["tokio-comp"] }
 # HTTP请求
-reqwest = "0.12.23"
+reqwest = { version = "0.12.23", default-features = false, features = [
+    "json",
+    "rustls-tls",
+] }
 # 异步运行
 tokio = { version = "1.47.1", features = ["full"] }
 # 序列化相关
