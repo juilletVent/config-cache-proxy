@@ -7,10 +7,7 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use crate::{
-    config::SYSTEM_CONFIG,
-    redis_driver::get_redis_manager,
-};
+use crate::{config::SYSTEM_CONFIG, redis_driver::get_redis_manager};
 use axum::{
     Router,
     http::Uri,
@@ -105,7 +102,7 @@ async fn clear_cache() -> Result<Json<serde_json::Value>, (StatusCode, &'static 
 static YML_EXT_SUFFIX: &str = ".yml";
 
 async fn proxy_config_center(uri: Uri) -> Result<String, (StatusCode, String)> {
-    println!("REQUEST_URI: {}", uri.to_string());
+    // println!("REQUEST_URI: {}", uri.to_string());
 
     let uri_str = uri.to_string();
     // 忽略非yml文件的请求
@@ -124,7 +121,7 @@ async fn proxy_config_center(uri: Uri) -> Result<String, (StatusCode, String)> {
         .await
         .get(&url)
         .await
-        .unwrap_or_else(|err| format!("Redis get failed, url: {}, error: {}", url, err));
+        .unwrap_or_else(|_| "".to_string());
     if !cached_response.is_empty() {
         // 增加缓存命中计数
         RUNTIME_STATS.increment_cache_hit_count();
