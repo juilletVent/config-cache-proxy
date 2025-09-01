@@ -1,8 +1,9 @@
 use std::{fs, sync::LazyLock};
 
 use serde::{Deserialize, Serialize};
+use crate::utils::errors::{AppError, AppResult};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SystemConfig {
     // 服务绑定地址
     pub server_address: String,
@@ -17,7 +18,7 @@ pub struct SystemConfig {
     pub redis: RedisConfig,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RedisConfig {
     // Redis 地址
     pub address: String,
@@ -29,14 +30,22 @@ pub struct RedisConfig {
     pub cache_expire_time: u64,
 }
 
-pub static SYSTEM_CONFIG: LazyLock<SystemConfig> = LazyLock::new(|| {
-    let config_str = fs::read_to_string("./config.yml").unwrap_or_else(|_| {
-        eprintln!("Failed to read config.yml, please check the file path");
-        std::process::exit(1);
-    });
+impl SystemConfig {
+    pub fn load_from_file(path: &str) -> AppResult<Self> {
+        let config_str = fs::read_to_string(path)
+            .map_err(|e| AppError::Config(format!("Failed to read config file '{}': {}", path, e)))?;
 
-    serde_yml::from_str(&config_str).unwrap_or_else(|e| {
-        eprintln!("Failed to parse config.yml: {}", e);
+        let config: SystemConfig = serde_yml::from_str(&config_str)
+            .map_err(|e| AppError::Config(format!("Failed to parse config file '{}': {}", path, e)))?;
+
+        Ok(config)
+    }
+}
+
+// 保持向后兼容的全局配置
+pub static SYSTEM_CONFIG: LazyLock<SystemConfig> = LazyLock::new(|| {
+    SystemConfig::load_from_file("./config.yml").unwrap_or_else(|e| {
+        eprintln!("Failed to load configuration: {}", e);
         std::process::exit(1);
     })
 });
