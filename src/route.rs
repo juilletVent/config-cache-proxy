@@ -12,16 +12,38 @@ use axum::{
     Router,
     http::Uri,
     response::{Html, Json},
+    routing::delete,
     routing::get,
 };
 use reqwest::{Client, StatusCode};
 use serde::{Deserialize, Serialize};
+use utoipa::{OpenApi, ToSchema};
+use utoipa_swagger_ui::SwaggerUi;
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, ToSchema)]
 struct RuntimeInfo {
+    /// 总请求数
     request_count: u64,
+    /// 缓存命中数
     cache_hit_count: u64,
+    /// 启动时间戳（毫秒）
     start_unix_time: u128,
+}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+struct ClearCacheResponse {
+    /// 操作是否成功
+    success: bool,
+    /// 响应消息
+    message: String,
+    /// 删除的缓存条目数量
+    deleted_count: u64,
+}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+struct ErrorResponse {
+    /// 错误消息
+    error: String,
 }
 
 struct RuntimeStats {
@@ -57,12 +79,40 @@ static RUNTIME_STATS: LazyLock<RuntimeStats> = LazyLock::new(|| RuntimeStats {
         .as_millis(),
 });
 
+#[derive(OpenApi)]
+#[openapi(
+    info(
+        title = "Config Cache Proxy API",
+        description = "一个高性能的配置缓存代理服务，提供配置文件缓存和运行时监控功能",
+        version = "0.1.0",
+        contact(
+            name = "API Support",
+            email = "support@example.com"
+        )
+    ),
+    paths(
+        get_runtime,
+        clear_cache,
+        proxy_config_center
+    ),
+    components(
+        schemas(RuntimeInfo, ClearCacheResponse, ErrorResponse)
+    ),
+    tags(
+        (name = "monitoring", description = "监控和统计相关接口"),
+        (name = "cache", description = "缓存管理相关接口"),
+        (name = "proxy", description = "反向代理相关接口")
+    )
+)]
+pub struct ApiDoc;
+
 pub fn register_routes(mut app: Router) -> Router {
     app = app
         .route("/", get(home_page))
         .route("/get-runtime", get(get_runtime))
-        .route("/clear-cache", get(clear_cache))
-        .route("/{*all}", get(proxy_config_center));
+        .route("/clear-cache", delete(clear_cache))
+        .route("/{*all}", get(proxy_config_center))
+        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()));
     app
 }
 
@@ -75,12 +125,33 @@ async fn home_page() -> Result<Html<String>, (StatusCode, &'static str)> {
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/get-runtime",
+    tag = "monitoring",
+    summary = "获取运行时统计信息",
+    description = "返回服务的运行时统计信息，包括请求总数、缓存命中数和启动时间",
+    responses(
+        (status = 200, description = "成功返回运行时信息", body = RuntimeInfo)
+    )
+)]
 async fn get_runtime() -> Json<RuntimeInfo> {
     // 返回运行信息的JSON
     Json(RUNTIME_STATS.to_info())
 }
 
-async fn clear_cache() -> Result<Json<serde_json::Value>, (StatusCode, &'static str)> {
+#[utoipa::path(
+    delete,
+    path = "/clear-cache",
+    tag = "cache",
+    summary = "清理所有缓存",
+    description = "清理Redis中的所有缓存条目，返回清理的条目数量",
+    responses(
+        (status = 200, description = "成功清理缓存", body = ClearCacheResponse),
+        (status = 500, description = "内部服务器错误", body = ErrorResponse)
+    )
+)]
+async fn clear_cache() -> Result<Json<ClearCacheResponse>, (StatusCode, Json<ErrorResponse>)> {
     let total_deleted = get_redis_manager()
         .await
         .delete_all()
@@ -90,17 +161,31 @@ async fn clear_cache() -> Result<Json<serde_json::Value>, (StatusCode, &'static 
             0
         });
 
-    let response = serde_json::json!({
-        "success": true,
-        "message": format!("成功清理了 {} 个缓存条目", total_deleted),
-        "deleted_count": total_deleted
-    });
+    let response = ClearCacheResponse {
+        success: true,
+        message: format!("成功清理了 {} 个缓存条目", total_deleted),
+        deleted_count: total_deleted as u64,
+    };
 
     Ok(Json(response))
 }
 
 static YML_EXT_SUFFIX: &str = ".yml";
 
+#[utoipa::path(
+    get,
+    path = "/{path}",
+    tag = "proxy",
+    summary = "代理配置中心请求",
+    description = "代理对配置中心的请求，支持缓存机制。只处理以.yml结尾的文件请求",
+    params(
+        ("path" = String, description = "要代理的配置文件路径")
+    ),
+    responses(
+        (status = 200, description = "成功返回配置文件内容", body = String),
+        (status = 500, description = "代理请求失败", body = ErrorResponse)
+    )
+)]
 async fn proxy_config_center(uri: Uri) -> Result<String, (StatusCode, String)> {
     // println!("REQUEST_URI: {}", uri.to_string());
 
