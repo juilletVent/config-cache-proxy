@@ -1,9 +1,8 @@
-use crate::{utils::errors::{AppError, AppResult}, AppState};
-use axum::{
-    extract::State,
-    http::Uri,
-    response::Html,
+use crate::{
+    system::AppState,
+    utils::errors::{AppError, AppResult},
 };
+use axum::{extract::State, http::Uri, response::Html};
 use std::fs::read_to_string;
 
 pub async fn home_page(home_file_path: &str) -> AppResult<Html<String>> {
@@ -26,12 +25,9 @@ pub async fn home_page(home_file_path: &str) -> AppResult<Html<String>> {
         (status = 500, description = "代理请求失败", body = crate::utils::errors::ErrorResponse)
     )
 )]
-pub async fn proxy_config_center(
-    uri: Uri,
-    State(app_state): State<AppState>,
-) -> AppResult<String> {
+pub async fn proxy_config_center(uri: Uri, State(app_state): State<AppState>) -> AppResult<String> {
     let uri_str = uri.to_string();
-    
+
     // 增加请求计数
     app_state.runtime_stats.increment_request_count();
 
@@ -48,4 +44,4 @@ pub async fn proxy_config_center(
             Ok(String::new())
         }
     }
-} 
+}

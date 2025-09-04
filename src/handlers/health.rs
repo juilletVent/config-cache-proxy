@@ -1,4 +1,4 @@
-use crate::{models::runtime::RuntimeInfo, AppState};
+use crate::{models::runtime::RuntimeInfo, system::AppState};
 use axum::{extract::State, response::Json};
 
 #[utoipa::path(
@@ -13,4 +13,4 @@ use axum::{extract::State, response::Json};
 )]
 pub async fn get_runtime(State(app_state): State<AppState>) -> Json<RuntimeInfo> {
     Json(app_state.runtime_stats.to_info())
-} 
+}
