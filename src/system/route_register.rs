@@ -5,7 +5,7 @@ use utoipa_swagger_ui::SwaggerUi;
 
 use crate::handlers::cache::clear_cache;
 use crate::handlers::health::get_runtime;
-use crate::handlers::proxy::proxy_config_center;
+use crate::handlers::proxy::{home_page, proxy_config_center};
 use crate::models::{responses::ClearCacheResponse, runtime::RuntimeInfo};
 use crate::system::AppState;
 use crate::utils::errors::ErrorResponse;
@@ -43,7 +43,7 @@ pub fn create_router(app_state: AppState) -> Router {
     Router::new()
         .route(
             "/",
-            get(move || async move { crate::handlers::proxy::home_page(&home_file_path).await }),
+            get(move || async move { home_page(&home_file_path).await }),
         )
         .route("/get-runtime", get(get_runtime))
         .route("/clear-cache", delete(clear_cache))
