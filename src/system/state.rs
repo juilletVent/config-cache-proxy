@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
 use crate::{
-    config::SystemConfig,
     models::runtime::RuntimeStats,
     repositories::redis_repository::RedisRepository,
     services::{cache_service::CacheService, proxy_service::ProxyService},
+    system::SystemConfig,
     utils::errors::AppResult,
 };
 use reqwest::Client;

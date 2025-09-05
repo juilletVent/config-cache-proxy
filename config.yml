@@ -14,6 +14,6 @@ redis:
   # Redis 端口
   port: 32079
   # Redis 密码
-  password: GmsoftTest1
+  password: your-password
   # 缓存过期时间
   cache_expire_time: 3600

@@ -1,7 +1,4 @@
-use config_cache_proxy::{
-    config::SystemConfig,
-    system::{AppState, create_router, shutdown_signal},
-};
+use config_cache_proxy::system::{AppState, SystemConfig, create_router, shutdown_signal};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
